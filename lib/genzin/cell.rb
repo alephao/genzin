@@ -51,10 +51,10 @@ class CellGenerator
     print 'Cell class name: '
     cell_name = STDIN.gets.chomp
 
-    dir_cells = get_or_create_cells_folder
-    group_cells = get_or_create_xcode_cells_group
+    dir_cells = get_or_create_cells_folder()
+    group_cells = get_or_create_xcode_cells_group()
 
-    create_base_if_needed
+    create_base_if_needed()
 
     cell_template_path = "#{dir_cells}/#{cell_name}.swift"
     cell_template = File.read(get_script_path('/genzin/templates/CellTemplate.swift'))
