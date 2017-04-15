@@ -2,6 +2,7 @@
 require 'fileutils'
 require 'thor'
 require 'xcodeproj'
+require_relative 'genzin/cell'
 
 def get_cell_name
   print 'Cell class name: '
@@ -11,16 +12,6 @@ end
 
 def get_script_path(path)
   return File.expand_path(File.dirname(__FILE__)) + path
-end
-
-def get_or_create_cells_folder(root)
-  if File.exists?("#{root}/Views/Cells")
-    return Dir["#{root}/Views/Cells"].first
-  else
-    puts "Coudn't find folder `#{root}/Views/Cells`, creating one now"
-    FileUtils::mkdir_p "#{root}/Views/Cells"
-    return Dir["#{root}/Views/Cells"].first
-  end
 end
 
 def choose_target(project)
@@ -80,37 +71,16 @@ class Genzin < Thor
 
       cell_name = get_cell_name()
 
+      cell_generator = CellGenerator.new()
+
       target_name = "#{target.name}"
-      dir_cells = get_or_create_cells_folder(target_name)
+      dir_cells = cell_generator.get_or_create_cells_folder(target_name)
 
       # Get or create xcode groups
-      group_views = project.main_group[target_name]["Views"]
-      unless group_views
-        group_views = project.main_group[target_name].new_group('Views')
-      end
-
-      group_cells = group_views['Cells']
-      unless group_cells
-        group_cells = group_views.new_group('Cells')
-        puts "Created new group #{target_name}/Views/Cells"
-      end
+      group_cells = cell_generator.get_or_create_xcode_cell_group(project, target_name)
 
       # Write files and add to groups
-      cell_template_path = "#{dir_cells}/#{cell_name}.swift"
-      cell_template = File.read(get_script_path('/templates/CellTemplate.swift'))
-      new_cell_template = cell_template.gsub('___CELLNAME___', cell_name)
-      out_cell_template = File.new(cell_template_path, 'w')
-      out_cell_template.puts(new_cell_template)
-      out_cell_template.close
-      group_cells.new_file("Views/Cells/#{cell_name}.swift")
-
-      cell_r_template_path = "#{dir_cells}/#{cell_name}Reactor.swift"
-      cell_r_template = File.read(get_script_path('/templates/CellReactorTemplate.swift'))
-      new_cell_r_template = cell_r_template.gsub('___CELLNAME___', cell_name)
-      out_cell_r_template = File.new(cell_r_template_path, 'w')
-      out_cell_r_template.puts(new_cell_r_template)
-      out_cell_r_template.close
-      group_cells.new_file("Views/Cells/#{cell_name}Reactor.swift")
+      cell_generator.create_cell(dir_cells, group_cells, cell_name)
 
       project.save
     else
