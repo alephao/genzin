@@ -4,12 +4,6 @@ require 'thor'
 require 'xcodeproj'
 require_relative 'genzin/cell'
 
-def get_cell_name
-  print 'Cell class name: '
-  the_cell_name = STDIN.gets.chomp
-  return the_cell_name
-end
-
 def get_script_path(path)
   return File.expand_path(File.dirname(__FILE__)) + path
 end
@@ -69,18 +63,8 @@ class Genzin < Thor
       target = choose_target(project)
       return if target.nil?
 
-      cell_name = get_cell_name()
-
-      cell_generator = CellGenerator.new()
-
-      target_name = "#{target.name}"
-      dir_cells = cell_generator.get_or_create_cells_folder(target_name)
-
-      # Get or create xcode groups
-      group_cells = cell_generator.get_or_create_xcode_cell_group(project, target_name)
-
-      # Write files and add to groups
-      cell_generator.create_cell(dir_cells, group_cells, cell_name)
+      cell_generator = CellGenerator.new(project, target)
+      cell_generator.new_cell()
 
       project.save
     else

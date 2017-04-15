@@ -3,32 +3,43 @@ require 'fileutils'
 require 'xcodeproj'
 
 class CellGenerator
-  def get_or_create_cells_folder(target_name)
-    if File.exists?("#{target_name}/Views/Cells")
-      return Dir["#{target_name}/Views/Cells"].first
+  def initialize(project, target)
+    @project = project
+    @target_name = target.name
+  end
+
+  def get_or_create_cells_folder
+    if File.exists?("#{@target_name}/Views/Cells")
+      return Dir["#{@target_name}/Views/Cells"].first
     else
-      puts "Coudn't find folder `#{target_name}/Views/Cells`, creating one now"
-      FileUtils::mkdir_p "#{target_name}/Views/Cells"
-      return Dir["#{target_name}/Views/Cells"].first
+      puts "Coudn't find folder `#{@target_name}/Views/Cells`, creating one now"
+      FileUtils::mkdir_p "#{@target_name}/Views/Cells"
+      return Dir["#{@target_name}/Views/Cells"].first
     end
   end
 
-  def get_or_create_xcode_cell_group(project, target_name)
-    group_views = project.main_group[target_name]["Views"]
+  def get_or_create_xcode_cells_group
+    group_views = @project.main_group[@target_name]["Views"]
     unless group_views
-      group_views = project.main_group[target_name].new_group('Views')
+      group_views = @project.main_group[@target_name].new_group('Views')
     end
 
     group_cells = group_views['Cells']
     unless group_cells
       group_cells = group_views.new_group('Cells')
-      puts "Created new group #{target_name}/Views/Cells"
+      puts "Created new group #{@target_name}/Views/Cells"
     end
 
     return group_cells
   end
 
-  def create_cell(dir_cells, group_cells, cell_name)
+  def new_cell
+    print 'Cell class name: '
+    cell_name = STDIN.gets.chomp
+
+    dir_cells = get_or_create_cells_folder
+    group_cells = get_or_create_xcode_cells_group
+
     cell_template_path = "#{dir_cells}/#{cell_name}.swift"
     cell_template = File.read(get_script_path('/genzin/templates/CellTemplate.swift'))
     new_cell_template = cell_template.gsub('___CELLNAME___', cell_name)
