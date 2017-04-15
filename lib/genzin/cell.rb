@@ -12,7 +12,7 @@ class CellGenerator
     if File.exists?("#{@target_name}/Views/Cells")
       return Dir["#{@target_name}/Views/Cells"].first
     else
-      puts "Coudn't find folder `#{@target_name}/Views/Cells`, creating one now"
+      puts "Creating folder #{@target_name}/Views/Cells"
       FileUtils::mkdir_p "#{@target_name}/Views/Cells"
       return Dir["#{@target_name}/Views/Cells"].first
     end
@@ -33,12 +33,28 @@ class CellGenerator
     return group_cells
   end
 
+  def create_base_if_needed
+    unless File.exists?("#{@target_name}/Views/Cells/BaseTableViewCell.swift")
+      dir_cells = get_or_create_cells_folder
+      group_cells = get_or_create_xcode_cells_group
+
+      dir_base_cell = get_script_path('/genzin/templates/BaseTableViewCell.swift')
+      FileUtils::cp(dir_base_cell, dir_cells)
+
+      group_cells.new_file('View/Cells/BaseTableViewCell.swift')
+
+      puts 'Created BaseTableViewCell.swift'
+    end
+  end
+
   def new_cell
     print 'Cell class name: '
     cell_name = STDIN.gets.chomp
 
     dir_cells = get_or_create_cells_folder
     group_cells = get_or_create_xcode_cells_group
+
+    create_base_if_needed
 
     cell_template_path = "#{dir_cells}/#{cell_name}.swift"
     cell_template = File.read(get_script_path('/genzin/templates/CellTemplate.swift'))
@@ -47,6 +63,7 @@ class CellGenerator
     out_cell_template.puts(new_cell_template)
     out_cell_template.close
     group_cells.new_file("Views/Cells/#{cell_name}.swift")
+    puts "Created #{cell_name}.swift"
 
     cell_r_template_path = "#{dir_cells}/#{cell_name}Reactor.swift"
     cell_r_template = File.read(get_script_path('/genzin/templates/CellReactorTemplate.swift'))
@@ -55,5 +72,6 @@ class CellGenerator
     out_cell_r_template.puts(new_cell_r_template)
     out_cell_r_template.close
     group_cells.new_file("Views/Cells/#{cell_name}Reactor.swift")
+    puts "Created #{cell_name}Reactor.swift"
   end
 end
