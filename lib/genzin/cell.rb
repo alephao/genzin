@@ -5,43 +5,44 @@ require 'xcodeproj'
 class CellGenerator
   def initialize(project, target)
     @project = project
-    @target_name = target.name
+    @target = target
   end
 
   def get_or_create_cells_folder
-    if File.exists?("#{@target_name}/Views/Cells")
-      return Dir["#{@target_name}/Views/Cells"].first
+    if File.exists?("#{@target.name}/Views/Cells")
+      return Dir["#{@target.name}/Views/Cells"].first
     else
-      puts "Creating folder #{@target_name}/Views/Cells"
-      FileUtils::mkdir_p "#{@target_name}/Views/Cells"
-      return Dir["#{@target_name}/Views/Cells"].first
+      puts "Creating folder #{@target.name}/Views/Cells"
+      FileUtils::mkdir_p "#{@target.name}/Views/Cells"
+      return Dir["#{@target.name}/Views/Cells"].first
     end
   end
 
   def get_or_create_xcode_cells_group
-    group_views = @project.main_group[@target_name]["Views"]
+    group_views = @project.main_group[@target.name]["Views"]
     unless group_views
-      group_views = @project.main_group[@target_name].new_group('Views')
+      group_views = @project.main_group[@target.name].new_group('Views')
     end
 
     group_cells = group_views['Cells']
     unless group_cells
       group_cells = group_views.new_group('Cells')
-      puts "Created new group #{@target_name}/Views/Cells"
+      puts "Created new group #{@target.name}/Views/Cells"
     end
 
     return group_cells
   end
 
   def create_base_if_needed
-    unless File.exists?("#{@target_name}/Views/Cells/BaseTableViewCell.swift")
+    unless File.exists?("#{@target.name}/Views/Cells/BaseTableViewCell.swift")
       dir_cells = get_or_create_cells_folder
       group_cells = get_or_create_xcode_cells_group
 
       dir_base_cell = get_script_path('/genzin/templates/BaseTableViewCell.swift')
       FileUtils::cp(dir_base_cell, dir_cells)
 
-      group_cells.new_file('View/Cells/BaseTableViewCell.swift')
+      file_ref = group_cells.new_file('View/Cells/BaseTableViewCell.swift')
+      @target.add_resources([file_ref])
 
       puts 'Created BaseTableViewCell.swift'
     end
@@ -62,7 +63,7 @@ class CellGenerator
     out_cell_template = File.new(cell_template_path, 'w')
     out_cell_template.puts(new_cell_template)
     out_cell_template.close
-    group_cells.new_file("Views/Cells/#{cell_name}.swift")
+    cell_fileref = group_cells.new_file("Views/Cells/#{cell_name}.swift")
     puts "Created #{cell_name}.swift"
 
     cell_r_template_path = "#{dir_cells}/#{cell_name}Reactor.swift"
@@ -71,7 +72,9 @@ class CellGenerator
     out_cell_r_template = File.new(cell_r_template_path, 'w')
     out_cell_r_template.puts(new_cell_r_template)
     out_cell_r_template.close
-    group_cells.new_file("Views/Cells/#{cell_name}Reactor.swift")
+    cell_r_fileref = group_cells.new_file("Views/Cells/#{cell_name}Reactor.swift")
     puts "Created #{cell_name}Reactor.swift"
+
+    @target.add_resources([cell_fileref, cell_r_fileref])
   end
 end
