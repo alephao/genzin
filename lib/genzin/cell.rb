@@ -1,8 +1,33 @@
 #!/usr/bin/env ruby
 require 'fileutils'
 require 'xcodeproj'
+require_relative 'generic_generator'
 
 class CellGenerator
+  include GenericGenerator
+
+  VALID_PROPERTIES = {
+      label:     { suffix: 'Label',     type: 'Label', reactor_property: 'text'},
+      imageview: { suffix: 'ImageView', type: 'Image', reactor_property: 'image'}
+  }
+
+  CELL_SNIPPET_REGEXP = /declaration:\n(.*\n)\ninitialization:\n(.*)\nconstraint:\n(.*\n)\nreactor:\n(.*\n)/m
+
+  CELL_SNIPPET_PLACEHOLDERS = [
+      {placeholder: '___NAME___', property_field: :name},
+      {placeholder: '___TYPE___', property_field: :type},
+      {placeholder: '___REACTORPROPERTY___', property_field: :reactor_property}
+  ]
+
+  CELL_SNIPPET_FILE = 'templates/CellSnippet.swift'
+
+  CELL_PLACEHOLDERS = [
+    '___PROPERTIES___',
+    '___ADDSUBVIEW___',
+    '___CONSTRAINTS___',
+    '___BINDREACTOR___'
+  ]
+
   def initialize(project, target)
     @project = project
     @target = target
@@ -57,9 +82,15 @@ class CellGenerator
 
     create_base_if_needed()
 
+    cell_properties = get_properties VALID_PROPERTIES
+    cell_snippets = get_snippets cell_properties, CELL_SNIPPET_FILE, CELL_SNIPPET_REGEXP, CELL_SNIPPET_PLACEHOLDERS
+
     cell_template_path = "#{dir_cells}/#{cell_name}.swift"
     cell_template = File.read(get_script_path('/genzin/templates/CellTemplate.swift'))
     new_cell_template = cell_template.gsub('___CELLNAME___', cell_name)
+    CELL_PLACEHOLDERS.each_with_index do |cp, i|
+      new_cell_template.gsub!(cp, cell_snippets[i])
+    end
     out_cell_template = File.new(cell_template_path, 'w')
     out_cell_template.puts(new_cell_template)
     out_cell_template.close
