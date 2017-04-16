@@ -57,4 +57,18 @@ module ViewGenerator
     end
     sections
   end
+
+  def write_template(template_file, target_dir, group, main_placeholder, main_name, placeholders, snippets)
+    template = File.read(get_script_path(template_file))
+    new_code = template.gsub(main_placeholder, main_name)
+    placeholders.each_with_index do |ph, i|
+      new_code.gsub!(ph, snippets[i])
+    end
+    new_file = "#{target_dir}/#{main_name}.swift"
+    out_cell_template = File.new(new_file, 'w')
+    out_cell_template.puts(new_code)
+    out_cell_template.close
+    puts "Created #{main_name}.swift"
+    group.new_file("Views/Cells/#{main_name}.swift")
+  end
 end
