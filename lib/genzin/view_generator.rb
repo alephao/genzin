@@ -10,7 +10,7 @@ module ViewGenerator
         rxplaceholder: 'Observable.just("").asDriver(onErrorJustReturn: "")'},
       imageview: {
         suffix: 'ImageView',
-        type: 'UIImage',
+        type: 'UIImageView',
         attribute: 'image',
         rxbind: 'Driver<UIImage>',
         rxplaceholder: 'Observable.just(UIImage()).asDriver(onErrorJustReturn: UIImage())'},

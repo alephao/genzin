@@ -45,8 +45,8 @@ def choose_project
 end
 
 class Genzin < Thor
-  desc 'cell OPTION', 'options: --no-reactor --no-properties'
-  def cell(options)
+  desc 'cell [OPTIONS]', 'options: --no-reactor --no-properties'
+  def cell
     # Get a project in folder and open it
     project_path = choose_project()
     return if project_path.nil?
