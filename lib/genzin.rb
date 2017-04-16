@@ -45,30 +45,20 @@ def choose_project
 end
 
 class Genzin < Thor
-  desc 'template OPTION', 'Options: base, cell, controller, reactor'
-  long_desc <<-LONGDESC
-  `genzin` will generate xcode templates for The Reactive Architecture.
-  LONGDESC
-  def template(option)
-    case option
-    when 'base'
-    when 'cell'
-      # Get a project in folder and open it
-      project_path = choose_project()
-      return if project_path.nil?
-      project = Xcodeproj::Project.open(project_path)
+  desc 'cell OPTION', 'options: --no-reactor --no-properties'
+  def cell(options)
+    # Get a project in folder and open it
+    project_path = choose_project()
+    return if project_path.nil?
+    project = Xcodeproj::Project.open(project_path)
 
-      # Get a project target
-      target = choose_target(project)
-      return if target.nil?
+    # Get a project target
+    target = choose_target(project)
+    return if target.nil?
 
-      cell_generator = CellGenerator.new(project, target)
-      cell_generator.new_cell()
+    cell_generator = CellGenerator.new(project, target)
+    cell_generator.new_cell()
 
-      project.save
-    else
-    end
+    project.save
   end
 end
-
-Genzin.start(ARGV)
