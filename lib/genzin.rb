@@ -21,9 +21,8 @@ def choose_target(project)
       puts "[#{i+1}] #{t.name}"
     end
     puts 'Choose a target'
-    return
-    selected_index = gets.chomp.to_i
-    return projects.targets[selected_index-1]
+    selected_index = STDIN.gets.chomp.to_i
+    return project.targets[selected_index-1]
   end
 end
 
@@ -40,7 +39,7 @@ def choose_project
       puts "[#{i+1}] #{p}"
     end
     puts 'Choose a project'
-    selected_index = gets.chomp.to_i
+    selected_index = STDIN.gets.chomp.to_i
     return projects[selected_index-1]
   end
 end
