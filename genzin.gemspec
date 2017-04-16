@@ -2,6 +2,7 @@ Gem::Specification.new do |s|
   s.name        = 'genzin'
   s.version     = '0.0.1'
   s.date        = '2017-04-16'
+  s.executables << 'genzin'
   s.summary     = "Genzin"
   s.description = "Swift code generator for Reactive architecture"
   s.authors     = ["Aleph Retamal, Adail Retamal, Evandro Viva"]
