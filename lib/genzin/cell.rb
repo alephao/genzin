@@ -6,17 +6,12 @@ require_relative 'generic_generator'
 class CellGenerator
   include GenericGenerator
 
-  VALID_PROPERTIES = {
-      label:     { suffix: 'Label',     type: 'Label', reactor_property: 'text'},
-      imageview: { suffix: 'ImageView', type: 'Image', reactor_property: 'image'}
-  }
-
   CELL_SNIPPET_REGEXP = /declaration:\n(.*\n)\ninitialization:\n(.*)\nconstraint:\n(.*\n)\nreactor:\n(.*\n)/m
 
   CELL_SNIPPET_PLACEHOLDERS = [
       {placeholder: '___NAME___', property_field: :name},
       {placeholder: '___TYPE___', property_field: :type},
-      {placeholder: '___REACTORPROPERTY___', property_field: :reactor_property}
+      {placeholder: '___REACTORPROPERTY___', property_field: :attribute}
   ]
 
   CELL_SNIPPET_FILE = 'templates/CellSnippet.swift'
@@ -28,6 +23,23 @@ class CellGenerator
     '___BINDREACTOR___'
   ]
 
+  # CELL REACTOR CONSTANTS
+  CELL_REACTOR_SNIPPET_REGEXP = /protocoloutput:\n(.*)\ncelloutput:\n(.*)\ninitialization:\n(.*\n)/m
+
+  CELL_REACTOR_SNIPPET_PLACEHOLDERS = [
+      {placeholder: '___PROPERTYNAME___', property_field: :name},
+      {placeholder: '___PROPERTYTYPE___', property_field: :rxbind},
+      {placeholder: '___PROPERTYINITPLACEHOLDER___', property_field: :rxplaceholder}
+  ]
+
+  CELL_REACTOR_SNIPPET_FILE = 'templates/CellReactorSnippet.swift'
+
+  CELL_REACTOR_PLACEHOLDERS = [
+    '___PROTOCOLOUTPUTS___',
+    '___OUTPUTS___',
+    '___INIT___'
+  ]
+
   def initialize(project, target)
     @project = project
     @target_name = target.name
@@ -37,7 +49,7 @@ class CellGenerator
     if File.exists?("#{@target_name}/Views/Cells")
       return Dir["#{@target_name}/Views/Cells"].first
     else
-      puts "Creating folder #{@target_name}/Views/Cells"
+      puts "Created folder #{@target_name}/Views/Cells"
       FileUtils::mkdir_p "#{@target_name}/Views/Cells"
       return Dir["#{@target_name}/Views/Cells"].first
     end
@@ -66,7 +78,7 @@ class CellGenerator
       dir_base_cell = get_script_path('/genzin/templates/BaseTableViewCell.swift')
       FileUtils::cp(dir_base_cell, dir_cells)
 
-      group_cells.new_file('View/Cells/BaseTableViewCell.swift')
+      group_cells.new_file('Views/Cells/BaseTableViewCell.swift')
 
       puts 'Created BaseTableViewCell.swift'
     end
@@ -81,7 +93,7 @@ class CellGenerator
 
     create_base_if_needed
 
-    cell_properties = get_properties VALID_PROPERTIES
+    cell_properties = get_properties
     cell_snippets = get_snippets cell_properties, CELL_SNIPPET_FILE, CELL_SNIPPET_REGEXP, CELL_SNIPPET_PLACEHOLDERS
 
     cell_template_path = "#{dir_cells}/#{cell_name}.swift"
@@ -96,9 +108,14 @@ class CellGenerator
     group_cells.new_file("Views/Cells/#{cell_name}.swift")
     puts "Created #{cell_name}.swift"
 
+    cell_reactor_snippets = get_snippets cell_properties, CELL_REACTOR_SNIPPET_FILE, CELL_REACTOR_SNIPPET_REGEXP, CELL_REACTOR_SNIPPET_PLACEHOLDERS
+
     cell_r_template_path = "#{dir_cells}/#{cell_name}Reactor.swift"
     cell_r_template = File.read(get_script_path('/genzin/templates/CellReactorTemplate.swift'))
     new_cell_r_template = cell_r_template.gsub('___CELLNAME___', cell_name)
+    CELL_REACTOR_PLACEHOLDERS.each_with_index do |cp, i|
+      new_cell_r_template.gsub!(cp, cell_reactor_snippets[i])
+    end
     out_cell_r_template = File.new(cell_r_template_path, 'w')
     out_cell_r_template.puts(new_cell_r_template)
     out_cell_r_template.close

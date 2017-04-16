@@ -1,5 +1,5 @@
 declaration:
-    internal let ___NAME___ = UI___TYPE___().then {
+    internal let ___NAME___ = ___TYPE___().then {
 
     }
 

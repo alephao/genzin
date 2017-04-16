@@ -1,8 +1,23 @@
 #!/usr/bin/env ruby
 
 module GenericGenerator
-  def get_properties(valid_properties, prompt='property name')
-    regex = Regexp.new('(' + valid_properties.keys.join('|') + ')$', true)
+  VALID_PROPERTIES = {
+      label:     {
+        suffix: 'Label',
+        type: 'UILabel',
+        attribute: 'text',
+        rxbind: 'Driver<String>',
+        rxplaceholder: 'Observable.just("").asDriver(onErrorJustReturn: "")'},
+      imageview: {
+        suffix: 'ImageView',
+        type: 'UIImage',
+        attribute: 'image',
+        rxbind: 'Driver<UIImage>',
+        rxplaceholder: 'Observable.just(UIImage()).asDriver(onErrorJustReturn: UIImage())'},
+  }
+
+  def get_properties(prompt='property name')
+    regex = Regexp.new('(' + VALID_PROPERTIES.keys.join('|') + ')$', true)
     properties = []
     while true
       print "\n#{prompt.capitalize} (empty to quit): "
@@ -14,8 +29,8 @@ module GenericGenerator
       if m.nil?
         puts "\nInvalid #{prompt}: #{property_name}"
       else
-        prop = valid_properties[m[1].downcase.to_sym]
-        properties << {name: property_name.gsub(regex, prop[:suffix]), type: prop[:type], reactor_property: prop[:reactor_property]}
+        prop = VALID_PROPERTIES[m[1].downcase.to_sym]
+        properties << {name: property_name.gsub(regex, prop[:suffix]), type: prop[:type], attribute: prop[:attribute], rxbind: prop[:rxbind], rxplaceholder: prop[:rxplaceholder]}
       end
     end
   end
