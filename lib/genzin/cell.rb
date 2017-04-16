@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 require 'fileutils'
 require 'xcodeproj'
-require_relative 'generic_generator'
+require_relative 'view_generator'
 
 class CellGenerator
-  include GenericGenerator
+  include ViewGenerator
 
   CELL_SNIPPET_REGEXP = /declaration:\n(.*\n)\ninitialization:\n(.*)\nconstraint:\n(.*\n)\nreactor:\n(.*\n)/m
 

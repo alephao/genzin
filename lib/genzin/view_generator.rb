@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-module GenericGenerator
+module ViewGenerator
   VALID_PROPERTIES = {
       label:     {
         suffix: 'Label',
