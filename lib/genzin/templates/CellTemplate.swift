@@ -14,11 +14,18 @@ ___PROPERTIES___
     // MARK: Initializing
     override func initialize() {
 ___ADDSUBVIEW___
+
 ___CONSTRAINTS___
     }
 
     // MARK: Configuring
     func configure(_ viewModel: ___CELLNAME___ViewModelType) {
-___BINDVIEWMODEL___
+        // MARK: ViewModel Inputs
+
+___BINDVIEWMODELINPUTS___
+
+        // MARK: ViewModel Outputs
+
+___BINDVIEWMODELOUTPUTS___
     }
 }

@@ -7,42 +7,6 @@ module Genzin
   # This class is used to generate Cells and its ViewModels
   #
   class CellGenerator
-    include ViewGenerator
-
-    # CELL CONSTANTS
-    CELL_SNIPPET_REGEXP = /declaration:\n(.*\n)\ninitialization:\n(.*)\nconstraint:\n(.*\n)\nviewmodel:\n(.*\n)/m
-
-    CELL_SNIPPET_PLACEHOLDERS = [
-        {placeholder: '___NAME___', property_field: :name},
-        {placeholder: '___TYPE___', property_field: :type},
-        {placeholder: '___VIEWMODELPROPERTY___', property_field: :attribute}
-    ]
-
-    CELL_SNIPPET_FILE = 'templates/CellSnippet.swift'
-
-    CELL_PLACEHOLDERS = [
-        '___PROPERTIES___',
-        '___ADDSUBVIEW___',
-        '___CONSTRAINTS___',
-        '___BINDVIEWMODEL___'
-    ]
-
-    # CELL VIEWMODEL CONSTANTS
-    CELL_VIEWMODEL_SNIPPET_REGEXP = /protocoloutput:\n(.*)\ncelloutput:\n(.*)\ninitialization:\n(.*\n)/m
-
-    CELL_VIEWMODEL_SNIPPET_PLACEHOLDERS = [
-        {placeholder: '___PROPERTYNAME___', property_field: :name},
-        {placeholder: '___PROPERTYTYPE___', property_field: :rxbind},
-        {placeholder: '___PROPERTYINITPLACEHOLDER___', property_field: :rxplaceholder}
-    ]
-
-    CELL_VIEWMODEL_SNIPPET_FILE = 'templates/CellViewModelSnippet.swift'
-
-    CELL_VIEWMODEL_PLACEHOLDERS = [
-        '___PROTOCOLOUTPUTS___',
-        '___OUTPUTS___',
-        '___INIT___'
-    ]
 
     # @param [Project] project
     #        The Xcode project you want to modify
@@ -52,6 +16,8 @@ module Genzin
     def initialize(project, target)
       @project = project
       @target = target
+
+      @view_generator = ViewGenerator.new
     end
 
     # Create the View/Cells folder if needed
@@ -72,7 +38,7 @@ module Genzin
     # @return [PBXGroup] the View/Cells group
     #
     def get_or_create_xcode_cells_group
-      group_views = @project.main_group[@target.name]["Views"]
+      group_views = @project.main_group[@target.name]['Views']
       unless group_views
         group_views = @project.main_group[@target.name].new_group('Views')
       end
@@ -104,6 +70,70 @@ module Genzin
       end
     end
 
+    # @param [Array<UIKitProperty>] properties
+    #
+    def create_cell_snippets(properties)
+      declarations = []
+      add_subviews = []
+      make_constraints = []
+      bind_inputs = []
+      bind_outputs = []
+      properties.each do |p|
+        declarations << p.declaration
+        add_subviews << p.add_subview(false)
+        make_constraints << p.make_constraints
+        bind_inputs.concat p.bind_inputs
+        bind_outputs.concat p.bind_outputs
+      end
+
+      properties_snippet = declarations.sort.reduce { |t, s| "#{t}\n#{s}" }
+      add_subviews_snippet = add_subviews.sort.reduce { |t, s| "#{t}\n#{s}" }
+      constraints_snippet = make_constraints.sort.reduce { |t, s| "#{t}\n#{s}" }
+      bind_inputs_snippet = bind_inputs.sort.reduce { |t, s| "#{t}\n#{s}" }
+      bind_outputs_snippet = bind_outputs.sort.reduce { |t, s| "#{t}\n#{s}" }
+
+
+      {
+          '___PROPERTIES___' => properties_snippet,
+          '___ADDSUBVIEW___' => add_subviews_snippet,
+          '___CONSTRAINTS___' => constraints_snippet,
+          '___BINDVIEWMODELINPUTS___' => bind_inputs_snippet,
+          '___BINDVIEWMODELOUTPUTS___' => bind_outputs_snippet,
+      }
+    end
+
+    # @param [Array<UIKitProperty>] properties
+    #
+    def create_viewmodel_snippets(properties)
+      protocol_inputs = []
+      protocol_outputs = []
+      viewmodel_inputs_declarations = []
+      viewmodel_outputs_declarations = []
+      viewmodel_outputs_inits = []
+      properties.each do |p|
+        protocol_inputs.concat p.protocol_inputs
+        protocol_outputs.concat p.protocol_outputs
+        viewmodel_inputs_declarations.concat p.viewmodel_inputs_declaration
+        viewmodel_outputs_declarations.concat p.viewmodel_outputs_declaration
+        viewmodel_outputs_inits.concat p.viewmodel_outputs_init
+      end
+
+      protocol_inputs_snippet = protocol_inputs.sort.reduce { |t, s| "#{t}\n#{s}" }
+      protocol_outputs_snippet = protocol_outputs.sort.reduce { |t, s| "#{t}\n#{s}" }
+      viewmodel_inputs_declarations_snippet = viewmodel_inputs_declarations.sort.reduce { |t, s| "#{t}\n#{s}" }
+      viewmodel_outputs_declarations_snippet = viewmodel_outputs_declarations.sort.reduce { |t, s| "#{t}\n#{s}" }
+      viewmodel_outputs_inits_snippet = viewmodel_outputs_inits.sort.reduce { |t, s| "#{t}\n#{s}" }
+
+
+      {
+          '___PROTOCOLINTPUTS___' => protocol_inputs_snippet,
+          '___PROTOCOLOUTPUTS___' => protocol_outputs_snippet,
+          '___INPUTS___' => viewmodel_inputs_declarations_snippet,
+          '___OUTPUTS___' => viewmodel_outputs_declarations_snippet,
+          '___INIT___' => viewmodel_outputs_inits_snippet,
+      }
+    end
+
     # Generates a new cell
     #
     # @note Asks user for the Cell name and its Properties
@@ -111,32 +141,30 @@ module Genzin
     def new_cell
       print 'Cell class name: '
       cell_name = STDIN.gets.chomp
-      cell_viewmodel_name = cell_name + "ViewModel"
+      cell_viewmodel_name = "#{cell_name}ViewModel"
 
       dir_cells = get_or_create_cells_folder
       group_cells = get_or_create_xcode_cells_group
 
       create_base_if_needed
 
-      cell_properties = get_properties
-      cell_snippets = get_snippets cell_properties, CELL_SNIPPET_FILE, CELL_SNIPPET_REGEXP, CELL_SNIPPET_PLACEHOLDERS
+      cell_properties = @view_generator.get_properties
+      cell_snippets = create_cell_snippets cell_properties
 
-      cell_fileref = write_template("#{TEMPLATE_PATH}CellTemplate.swift",
-                                    dir_cells,
-                                    group_cells,
-                                    '___CELLNAME___',
-                                    cell_name,
-                                    CELL_PLACEHOLDERS,
-                                    cell_snippets)
+      cell_fileref = @view_generator.write_template"#{TEMPLATE_PATH}CellTemplate.swift",
+                                                   dir_cells,
+                                                   group_cells,
+                                                   '___CELLNAME___',
+                                                   cell_name,
+                                                   cell_snippets
 
-      cell_viewmodel_snippets = get_snippets cell_properties, CELL_VIEWMODEL_SNIPPET_FILE, CELL_VIEWMODEL_SNIPPET_REGEXP, CELL_VIEWMODEL_SNIPPET_PLACEHOLDERS
-      cell_r_fileref = write_template("#{TEMPLATE_PATH}CellViewModelTemplate.swift",
-                                      dir_cells,
-                                      group_cells,
-                                      '___CELLNAME___',
-                                      cell_viewmodel_name,
-                                      CELL_VIEWMODEL_PLACEHOLDERS,
-                                      cell_viewmodel_snippets)
+      cell_viewmodel_snippets = create_viewmodel_snippets cell_properties
+      cell_r_fileref = @view_generator.write_template"#{TEMPLATE_PATH}CellViewModelTemplate.swift",
+                                                               dir_cells,
+                                                               group_cells,
+                                                               '___CELLNAME___',
+                                                               cell_viewmodel_name,
+                                                               cell_viewmodel_snippets
 
       @target.add_file_references([cell_fileref, cell_r_fileref])
     end
