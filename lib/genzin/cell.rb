@@ -97,7 +97,7 @@ class CellGenerator
       FileUtils::cp(dir_base_cell, dir_cells)
 
       file_ref = group_cells.new_file('Views/Cells/BaseTableViewCell.swift')
-      @target.add_resources([file_ref])
+      @target.add_file_references([file_ref])
 
       puts 'Created BaseTableViewCell.swift'
     end
@@ -137,6 +137,6 @@ class CellGenerator
                                     CELL_VIEWMODEL_PLACEHOLDERS,
                                     cell_viewmodel_snippets)
 
-    @target.add_resources([cell_fileref, cell_r_fileref])
+    @target.add_file_references([cell_fileref, cell_r_fileref])
   end
 end
