@@ -6,4 +6,4 @@ end
 
 require_relative '../lib/genzin'
 
-Genzin.start(ARGV)
+Genzin::CLI.start ARGV
