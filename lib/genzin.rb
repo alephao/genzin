@@ -4,6 +4,8 @@ require 'thor'
 require 'xcodeproj'
 require_relative 'genzin/cell'
 
+TEMPLATE_PATH = '/genzin/templates/'
+
 def get_script_path(path)
   return File.expand_path(File.dirname(__FILE__)) + path
 end
@@ -45,7 +47,7 @@ def choose_project
 end
 
 class Genzin < Thor
-  desc 'cell [OPTIONS]', 'options: --no-reactor --no-properties'
+  desc 'cell [OPTIONS]', 'options: --no-viewmodel --no-properties'
   def cell
     # Get a project in folder and open it
     project_path = choose_project()

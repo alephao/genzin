@@ -18,7 +18,7 @@ ___CONSTRAINTS___
     }
 
     // MARK: Configuring
-    func configure(_ reactor: ___CELLNAME___ReactorType) {
-___BINDREACTOR___
+    func configure(_ viewModel: ___CELLNAME___ViewModelType) {
+___BINDVIEWMODEL___
     }
 }

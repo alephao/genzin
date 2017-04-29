@@ -16,6 +16,12 @@ module ViewGenerator
         rxplaceholder: 'Observable.just(UIImage()).asDriver(onErrorJustReturn: UIImage())'},
   }
 
+  # Get a property name and check if it is a valid property
+  #
+  # @param [String] prompt
+  #
+  # @return [Array<Hash{String => String}>]
+  #
   def get_properties(prompt='property name')
     regex = Regexp.new('(' + VALID_PROPERTIES.keys.join('|') + ')$', true)
     properties = []
@@ -35,6 +41,22 @@ module ViewGenerator
     end
   end
 
+  # Get the snippets for each of the template file sections
+  #
+  # @param [Array<Hash{String => String}>] properties
+  #        The list of properties that will be used to generate the snippets
+  # @param [String] snippet_file
+  #        The path of the snippet file
+  # @param [Regexp] snippet_regexp
+  #        The regexp that will extract the template sections from snippet_file
+  # @param [Array<Hash{String => String}>] snippet_placeholders
+  #        The mapping between the placeholder and the property
+  #
+  # @return [Array<String>]
+  #
+  # @note Keep in mind that this function returns the list of snippets
+  #       in a specific order defined by the snippet_placeholders
+  #
   def get_snippets(properties, snippet_file, snippet_regexp, snippet_placeholders)
     sections = nil
     script_dir = File.dirname(File.expand_path(__FILE__))
@@ -58,6 +80,28 @@ module ViewGenerator
     sections
   end
 
+  # Generate a new file from a template and the snippets
+  # and add it to a Xcode group 
+  #
+  # @param [String] template_file
+  #        The template path relative to the lib folder
+  # @param [String] target_dir
+  #        The folder to generate the file in
+  # @param [PBXGroup] group
+  #        The Xcode group to put the file in
+  # @param [String] main_placeholder
+  #        The placeholder for main_name (next param)
+  # @param [String] main_name
+  #        The class name (eg. ExampleViewController)
+  # @param [Array<String>] placeholders
+  #        The template placeholders
+  # @param [Array<String>] snippets
+  #        The snippets to sub the placeholders
+  #
+  # @return [PBXFileReference] the new file
+  #
+  # @note The 'placeholders' and 'snippets' must be in the same order!
+  #
   def write_template(template_file, target_dir, group, main_placeholder, main_name, placeholders, snippets)
     template = File.read(get_script_path(template_file))
     new_code = template.gsub(main_placeholder, main_name)

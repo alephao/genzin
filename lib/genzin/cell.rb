@@ -3,15 +3,18 @@ require 'fileutils'
 require 'xcodeproj'
 require_relative 'view_generator'
 
+# This class is used to generate Cells and its ViewModels
+#
 class CellGenerator
   include ViewGenerator
 
-  CELL_SNIPPET_REGEXP = /declaration:\n(.*\n)\ninitialization:\n(.*)\nconstraint:\n(.*\n)\nreactor:\n(.*\n)/m
+  # CELL CONSTANTS
+  CELL_SNIPPET_REGEXP = /declaration:\n(.*\n)\ninitialization:\n(.*)\nconstraint:\n(.*\n)\nviewmodel:\n(.*\n)/m
 
   CELL_SNIPPET_PLACEHOLDERS = [
       {placeholder: '___NAME___', property_field: :name},
       {placeholder: '___TYPE___', property_field: :type},
-      {placeholder: '___REACTORPROPERTY___', property_field: :attribute}
+      {placeholder: '___VIEWMODELPROPERTY___', property_field: :attribute}
   ]
 
   CELL_SNIPPET_FILE = 'templates/CellSnippet.swift'
@@ -20,31 +23,40 @@ class CellGenerator
     '___PROPERTIES___',
     '___ADDSUBVIEW___',
     '___CONSTRAINTS___',
-    '___BINDREACTOR___'
+    '___BINDVIEWMODEL___'
   ]
 
-  # CELL REACTOR CONSTANTS
-  CELL_REACTOR_SNIPPET_REGEXP = /protocoloutput:\n(.*)\ncelloutput:\n(.*)\ninitialization:\n(.*\n)/m
+  # CELL VIEWMODEL CONSTANTS
+  CELL_VIEWMODEL_SNIPPET_REGEXP = /protocoloutput:\n(.*)\ncelloutput:\n(.*)\ninitialization:\n(.*\n)/m
 
-  CELL_REACTOR_SNIPPET_PLACEHOLDERS = [
+  CELL_VIEWMODEL_SNIPPET_PLACEHOLDERS = [
       {placeholder: '___PROPERTYNAME___', property_field: :name},
       {placeholder: '___PROPERTYTYPE___', property_field: :rxbind},
       {placeholder: '___PROPERTYINITPLACEHOLDER___', property_field: :rxplaceholder}
   ]
 
-  CELL_REACTOR_SNIPPET_FILE = 'templates/CellReactorSnippet.swift'
+  CELL_VIEWMODEL_SNIPPET_FILE = 'templates/CellViewModelSnippet.swift'
 
-  CELL_REACTOR_PLACEHOLDERS = [
+  CELL_VIEWMODEL_PLACEHOLDERS = [
     '___PROTOCOLOUTPUTS___',
     '___OUTPUTS___',
     '___INIT___'
   ]
 
+  # @param [Project] project
+  #        The Xcode project you want to modify
+  # @param [AbstractTarget]
+  #        The project target you want to modify
+  #
   def initialize(project, target)
     @project = project
     @target = target
   end
 
+  # Create the View/Cells folder if needed
+  #
+  # @return [String] the View/Cells path
+  #
   def get_or_create_cells_folder
     unless File.exists?("#{@target.name}/Views/Cells")
       puts "Creating folder #{@target.name}/Views/Cells"
@@ -53,6 +65,11 @@ class CellGenerator
     Dir["#{@target.name}/Views/Cells"].first
   end
 
+
+  # Create the View/Cells group if needed
+  #
+  # @return [PBXGroup] the View/Cells group
+  #
   def get_or_create_xcode_cells_group
     group_views = @project.main_group[@target.name]["Views"]
     unless group_views
@@ -68,6 +85,9 @@ class CellGenerator
     group_cells
   end
 
+  # Copy the BaseTableViewCell.swift to the View/Cells
+  # directory if needed and create a Xcode Group if needed
+  #
   def create_base_if_needed
     unless File.exists?("#{@target.name}/Views/Cells/BaseTableViewCell.swift")
       dir_cells = get_or_create_cells_folder
@@ -83,9 +103,14 @@ class CellGenerator
     end
   end
 
+  # Generates a new cell
+  #
+  # @note Asks user for the Cell name and its Properties
+  #
   def new_cell
     print 'Cell class name: '
     cell_name = STDIN.gets.chomp
+    cell_viewmodel_name = cell_name + "ViewModel"
 
     dir_cells = get_or_create_cells_folder
     group_cells = get_or_create_xcode_cells_group
@@ -95,40 +120,22 @@ class CellGenerator
     cell_properties = get_properties
     cell_snippets = get_snippets cell_properties, CELL_SNIPPET_FILE, CELL_SNIPPET_REGEXP, CELL_SNIPPET_PLACEHOLDERS
 
-    # cell_template_path = "#{dir_cells}/#{cell_name}.swift"
-    # cell_template = File.read(get_script_path('/genzin/templates/CellTemplate.swift'))
-    # new_cell_template = cell_template.gsub('___CELLNAME___', cell_name)
-    # CELL_PLACEHOLDERS.each_with_index do |cp, i|
-    #   new_cell_template.gsub!(cp, cell_snippets[i])
-    # end
-    # out_cell_template = File.new(cell_template_path, 'w')
-    # out_cell_template.puts(new_cell_template)
-    # out_cell_template.close
-    # cell_fileref = group_cells.new_file("Views/Cells/#{cell_name}.swift")
-    # puts "Created #{cell_name}.swift"
+    cell_fileref = write_template("#{TEMPLATE_PATH}CellTemplate.swift",
+                                  dir_cells,
+                                  group_cells,
+                                  '___CELLNAME___',
+                                  cell_name,
+                                  CELL_PLACEHOLDERS,
+                                  cell_snippets)
 
-    cell_fileref = write_template('/genzin/templates/CellTemplate.swift', dir_cells,
-                                  group_cells, '___CELLNAME___', cell_name,
-                                  CELL_PLACEHOLDERS, cell_snippets)
-
-    # cell_reactor_snippets = get_snippets cell_properties, CELL_REACTOR_SNIPPET_FILE, CELL_REACTOR_SNIPPET_REGEXP, CELL_REACTOR_SNIPPET_PLACEHOLDERS
-    #
-    # cell_r_template_path = "#{dir_cells}/#{cell_name}Reactor.swift"
-    # cell_r_template = File.read(get_script_path('/genzin/templates/CellReactorTemplate.swift'))
-    # new_cell_r_template = cell_r_template.gsub('___CELLNAME___', cell_name)
-    # CELL_REACTOR_PLACEHOLDERS.each_with_index do |cp, i|
-    #   new_cell_r_template.gsub!(cp, cell_reactor_snippets[i])
-    # end
-    # out_cell_r_template = File.new(cell_r_template_path, 'w')
-    # out_cell_r_template.puts(new_cell_r_template)
-    # out_cell_r_template.close
-    # cell_r_fileref = group_cells.new_file("Views/Cells/#{cell_name}Reactor.swift")
-    # puts "Created #{cell_name}Reactor.swift"
-
-    cell_r_fileref = write_template('/genzin/templates/CellReactorTemplate.swift', dir_cells,
-                                  group_cells, '___CELLNAME___', cell_name,
-                                    CELL_REACTOR_PLACEHOLDERS, cell_reactor_snippets)
-
+    cell_viewmodel_snippets = get_snippets cell_properties, CELL_VIEWMODEL_SNIPPET_FILE, CELL_VIEWMODEL_SNIPPET_REGEXP, CELL_VIEWMODEL_SNIPPET_PLACEHOLDERS
+    cell_r_fileref = write_template("#{TEMPLATE_PATH}CellViewModelTemplate.swift",
+                                    dir_cells,
+                                    group_cells,
+                                    '___CELLNAME___',
+                                    cell_viewmodel_name,
+                                    CELL_VIEWMODEL_PLACEHOLDERS,
+                                    cell_viewmodel_snippets)
 
     @target.add_resources([cell_fileref, cell_r_fileref])
   end

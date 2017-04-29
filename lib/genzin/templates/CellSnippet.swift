@@ -10,7 +10,7 @@ constraint:
 
         }
 
-reactor:
-        reactor.name
-            .drive(___NAME___.rx.___REACTORPROPERTY___)
+viewmodel:
+        viewModel.name
+            .drive(___NAME___.rx.___VIEWMODELPROPERTY___)
             .disposed(by: disposeBag)
