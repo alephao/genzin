@@ -45,7 +45,7 @@ class CellGenerator
 
   # @param [Project] project
   #        The Xcode project you want to modify
-  # @param [AbstractTarget]
+  # @param [AbstractTarget] target
   #        The project target you want to modify
   #
   def initialize(project, target)
