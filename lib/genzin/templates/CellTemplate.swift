@@ -21,11 +21,9 @@ ___CONSTRAINTS___
     // MARK: Configuring
     func configure(_ viewModel: ___CELLNAME___ViewModelType) {
         // MARK: ViewModel Inputs
-
 ___BINDVIEWMODELINPUTS___
 
         // MARK: ViewModel Outputs
-
 ___BINDVIEWMODELOUTPUTS___
     }
 }

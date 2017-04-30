@@ -3,8 +3,6 @@ require_relative 'swift_property'
 
 module Genzin
   class ViewGenerator
-    # @todo Create a Property class
-    #
     VALID_PROPERTIES = {
         imageview: {
             suffix: 'ImageView',
@@ -40,10 +38,9 @@ module Genzin
           puts "\nInvalid #{prompt}: #{property_name}"
         else
           prop = VALID_PROPERTIES[m[1].downcase.to_sym]
-          suffix = property_name.gsub(regex, prop[:suffix])
-          properties << UIKitProperty.new(property_name,
-                                      suffix,
-                                      prop[:type])
+          properties << UIKitProperty.new(property_name.gsub(prop[:suffix], ''),
+                                          prop[:suffix],
+                                          prop[:type])
         end
       end
     end
@@ -72,7 +69,7 @@ module Genzin
       template = File.read(GenzinHelper.get_script_path(template_file))
       new_code = template.gsub(main_placeholder, main_name)
       snippets.each do |placeholder, snippet|
-        new_code.gsub!(placeholder, snippet)
+        new_code.gsub!(placeholder, snippet || '')
       end
       new_file = "#{target_dir}/#{main_name}.swift"
       out_cell_template = File.new(new_file, 'w')

@@ -70,7 +70,11 @@ module Genzin
       end
     end
 
+    # Create cell snippets to sub on template
+    #
     # @param [Array<UIKitProperty>] properties
+    #
+    # @return [Hash{String => String}] the placeholder -> snippet map
     #
     def create_cell_snippets(properties)
       declarations = []
@@ -92,7 +96,6 @@ module Genzin
       bind_inputs_snippet = bind_inputs.sort.reduce { |t, s| "#{t}\n#{s}" }
       bind_outputs_snippet = bind_outputs.sort.reduce { |t, s| "#{t}\n#{s}" }
 
-
       {
           '___PROPERTIES___' => properties_snippet,
           '___ADDSUBVIEW___' => add_subviews_snippet,
@@ -102,7 +105,11 @@ module Genzin
       }
     end
 
+    # Create cell ViewModel snippets to sub on template
+    #
     # @param [Array<UIKitProperty>] properties
+    #
+    # @return [Hash{String => String}] the placeholder -> snippet map
     #
     def create_viewmodel_snippets(properties)
       protocol_inputs = []
@@ -123,7 +130,6 @@ module Genzin
       viewmodel_inputs_declarations_snippet = viewmodel_inputs_declarations.sort.reduce { |t, s| "#{t}\n#{s}" }
       viewmodel_outputs_declarations_snippet = viewmodel_outputs_declarations.sort.reduce { |t, s| "#{t}\n#{s}" }
       viewmodel_outputs_inits_snippet = viewmodel_outputs_inits.sort.reduce { |t, s| "#{t}\n#{s}" }
-
 
       {
           '___PROTOCOLINTPUTS___' => protocol_inputs_snippet,

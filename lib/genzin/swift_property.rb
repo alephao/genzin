@@ -14,85 +14,85 @@ module Genzin
     end
 
     def declaration
-      return "internal let #{@name}#{@suffix} = #{@type}().then {
-
-      }"
+      "\n\tinternal let #{@name}#{@suffix} = #{@type}().then {" +
+      "\n\t\t<#Element Style#>" +
+      "\n\t}"
     end
 
     def add_subview(view=true)
-      return "#{view ? 'view.' : ''}addSubview(#{@name}#{@suffix})"
+      "\t\t#{view ? 'view.' : ''}addSubview(#{@name}#{@suffix})"
     end
 
     def make_constraints
-      "#{@name}#{@suffix}.snp.makeConstraints { make in
-
-      }"
+      "\t\t#{@name}#{@suffix}.snp.makeConstraints { make in" +
+      "\n\t\t\t<#Element Constraints#>" +
+      "\n\t\t}"
     end
 
     def bind_inputs
       if @type == UITextField
-        return ["#{@name}#{@suffix}.rx.text.changed
-                                     .bindTo(viewModel.#{@name}#{@suffix}DidChange)
-                                     .disposed(by: disposeBag)",
-                  "#{@name}#{@suffix}.rx.text.controlEvent(.editingDidEndOnExit)
-                                     .bindTo(viewModel.#{@name}#{@suffix}DidReturn)
-                                     .disposed(by: disposeBag)"]
+        return ["\n\t\t#{@name}#{@suffix}.rx.text.changed" +
+                "\n\t\t\t.bindTo(viewModel.#{@name}#{@suffix}DidChange)" +
+                "\n\t\t\t.disposed(by: disposeBag)",
+                "\n\t\t#{@name}#{@suffix}.rx.controlEvent(.editingDidEndOnExit)" +
+                "\n\t\t\t.bindTo(viewModel.#{@name}#{@suffix}DidReturn)" +
+                "\n\t\t\t.disposed(by: disposeBag)"]
       end
       []
     end
 
     def bind_outputs
       if @type == UIImageView
-        return ["viewModel.#{@name}
-                       .drive(#{@name}#{@suffix}.rx.image)
-                       .disposed(by: disposeBag)"]
+        return ["\n\t\tviewModel.#{@name}" +
+                "\n\t\t\t.drive(#{@name}#{@suffix}.rx.image)" +
+                "\n\t\t\t.disposed(by: disposeBag)"]
       elsif @type == UILabel
-        return ["viewModel.#{@name}
-                       .drive(#{@name}#{@suffix}.rx.text)
-                       .disposed(by: disposeBag)"]
+        return ["\n\t\tviewModel.#{@name}" +
+                "\n\t\t\t.drive(#{@name}#{@suffix}.rx.text)" +
+                "\n\t\t\t.disposed(by: disposeBag)"]
       end
       []
     end
 
     def protocol_inputs
       if @type == UITextField
-        return ["var #{@name}#{@suffix}DidChange: PublishSubject<String> { get }",
-                  "var #{@name}#{@suffix}DidReturn: PublishSubject<Void> { get }"]
+        return ["\tvar #{@name}|#{@suffix}DidChange: PublishSubject<String> { get }",
+                "\tvar #{@name}|#{@suffix}DidReturn: PublishSubject<Void> { get }"]
       end
       []
     end
 
     def viewmodel_inputs_declaration
       if @type == UITextField
-        return ["let #{@name}#{@suffix}DidChange: PublishSubject<String> = .init()",
-                  "let #{@name}#{@suffix}DidReturn: PublishSubject<Void> = .init()"]
+        return ["\tlet #{@name}#{@suffix}DidChange: PublishSubject<String> = .init()",
+                "\tlet #{@name}#{@suffix}DidReturn: PublishSubject<Void> = .init()"]
       end
       []
     end
 
     def protocol_outputs
       if @type == UIImageView
-        return ["var #{@name}: Driver<UIImage> { get }"]
+        return ["\tvar #{@name}: Driver<UIImage> { get }"]
       elsif @type == UILabel
-        return ["var #{@name}: Driver<String> { get }"]
+        return ["\tvar #{@name}: Driver<String> { get }"]
       end
       []
     end
 
     def viewmodel_outputs_declaration
       if @type == UIImageView
-        return ["let #{@name}: Driver<UIImage>"]
+        return ["\tlet #{@name}: Driver<UIImage>"]
       elsif @type == UILabel
-        return ["let #{@name}: Driver<String>"]
+        return ["\tlet #{@name}: Driver<String>"]
       end
       []
     end
 
     def viewmodel_outputs_init
       if @type == UIImageView
-        return ["self.#{@name} = Observable.just(UIImage()).asDriver(onErrorJustReturn: UIImage())"]
+        return ["\t\tself.#{@name} = Observable.just(UIImage()).asDriver(onErrorJustReturn: UIImage())"]
       elsif @type == UILabel
-        return ["self.#{@name} = Observable.just(\"\").asDriver(onErrorJustReturn: \"\")"]
+        return ["\t\tself.#{@name} = Observable.just(\"\").asDriver(onErrorJustReturn: \"\")"]
       end
       []
     end
