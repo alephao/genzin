@@ -4,9 +4,9 @@ require 'xcodeproj'
 require_relative 'view_generator'
 
 module Genzin
-  # This class is used to generate Cells and its ViewModels
+  # This class is used to generate Controllers and its ViewModels
   #
-  class CellGenerator
+  class ControllerGenerator
 
     # @param [Project] project
     #        The Xcode project you want to modify
@@ -20,63 +20,63 @@ module Genzin
       @view_generator = ViewGenerator.new
     end
 
-    # Create the View/Cells folder if needed
+    # Create the View/Controllers folder if needed
     #
-    # @return [String] the View/Cells path
+    # @return [String] the View/Controllers path
     #
-    def get_or_create_cells_folder
-      unless File.exists?("#{@target.name}/Views/Cells")
-        puts "Creating folder #{@target.name}/Views/Cells"
-        FileUtils::mkdir_p "#{@target.name}/Views/Cells"
+    def get_or_create_controllers_folder
+      unless File.exists?("#{@target.name}/Views/Controllers")
+        puts "Creating folder #{@target.name}/Views/Controllers"
+        FileUtils::mkdir_p "#{@target.name}/Views/Controllers"
       end
-      Dir["#{@target.name}/Views/Cells"].first
+      Dir["#{@target.name}/Views/Controllers"].first
     end
 
 
-    # Create the View/Cells group if needed
+    # Create the View/Controllers group if needed
     #
-    # @return [PBXGroup] the View/Cells group
+    # @return [PBXGroup] the View/Controllers group
     #
-    def get_or_create_xcode_cells_group
+    def get_or_create_xcode_controllers_group
       group_views = @project.main_group[@target.name]['Views']
       unless group_views
         group_views = @project.main_group[@target.name].new_group('Views')
       end
 
-      group_cells = group_views['Cells']
-      unless group_cells
-        group_cells = group_views.new_group('Cells')
-        puts "Created new group #{@target.name}/Views/Cells"
+      group_controllers = group_views['Controllers']
+      unless group_controllers
+        group_controllers = group_views.new_group('Controllers')
+        puts "Created new group #{@target.name}/Views/Controllers"
       end
 
-      group_cells
+      group_controllers
     end
 
-    # Copy the BaseTableViewCell.swift to the View/Cells
+    # Copy the BaseViewController.swift to the View/Controllers
     # directory if needed and create a Xcode Group if needed
     #
     def create_base_if_needed
-      unless File.exists?("#{@target.name}/Views/Cells/BaseTableViewCell.swift")
-        dir_cells = get_or_create_cells_folder
-        group_cells = get_or_create_xcode_cells_group
+      unless File.exists?("#{@target.name}/Views/Controllers/BaseViewController.swift")
+        dir_controllers = get_or_create_controllers_folder
+        group_controllers = get_or_create_xcode_controllers_group
 
-        dir_base_cell = GenzinHelper.get_script_path('/genzin/templates/BaseTableViewCell.swift')
-        FileUtils::cp(dir_base_cell, dir_cells)
+        dir_base_controller = GenzinHelper.get_script_path('/genzin/templates/BaseViewController.swift')
+        FileUtils::cp(dir_base_controller, dir_controllers)
 
-        file_ref = group_cells.new_file('Views/Cells/BaseTableViewCell.swift')
+        file_ref = group_controllers.new_file('Views/Controllers/BaseViewController.swift')
         @target.add_file_references([file_ref])
 
-        puts 'Created BaseTableViewCell.swift'
+        puts 'Created BaseViewController.swift'
       end
     end
 
-    # Create cell snippets to sub on template
+    # Create controller snippets to sub on template
     #
     # @param [Array<UIKitProperty>] properties
     #
     # @return [Hash{String => String}] the placeholder -> snippet map
     #
-    def create_cell_snippets(properties)
+    def create_controller_snippets(properties)
       declarations = []
       add_subviews = []
       make_constraints = []
@@ -105,7 +105,7 @@ module Genzin
       }
     end
 
-    # Create cell ViewModel snippets to sub on template
+    # Create controller ViewModel snippets to sub on template
     #
     # @param [Array<UIKitProperty>] properties
     #
@@ -140,39 +140,38 @@ module Genzin
       }
     end
 
-    # Generates a new cell
+    # Generates a new controller
     #
-    # @note Asks user for the Cell name and its Properties
+    # @note Asks user for the Controller name and its Properties
     #
-    def new_cell
-      print 'Cell class name: '
-      cell_name = STDIN.gets.chomp
-      cell_viewmodel_name = "#{cell_name}ViewModel"
+    def new_controller
+      print 'Controller class name: '
+      controller_name = STDIN.gets.chomp
 
-      dir_cells = get_or_create_cells_folder
-      group_cells = get_or_create_xcode_cells_group
+      dir_controllers = get_or_create_controllers_folder
+      group_controllers = get_or_create_xcode_controllers_group
 
       create_base_if_needed
 
-      cell_properties = @view_generator.get_properties
-      cell_snippets = create_cell_snippets cell_properties
+      controller_properties = @view_generator.get_properties
+      controller_snippets = create_controller_snippets controller_properties
 
-      cell_fileref = @view_generator.write_template"#{TEMPLATE_PATH}CellTemplate.swift",
-                                                   "#{cell_name}.swift",
-                                                   dir_cells,
-                                                   group_cells,
-                                                   {'___CELLNAME___' => cell_name},
-                                                   cell_snippets
+      controller_fileref = @view_generator.write_template"#{TEMPLATE_PATH}ControllerTemplate.swift",
+                                                         "#{controller_name}ViewController.swift",
+                                                         dir_controllers,
+                                                         group_controllers,
+                                                         {'___CONTROLLERNAME___' => "#{controller_name}"},
+                                                         controller_snippets
 
-      cell_viewmodel_snippets = create_viewmodel_snippets cell_properties
-      cell_r_fileref = @view_generator.write_template"#{TEMPLATE_PATH}CellViewModelTemplate.swift",
-                                                               "#{cell_name}ViewModel.swift",
-                                                               dir_cells,
-                                                               group_cells,
-                                                               {'___CELLNAME___' => cell_viewmodel_name},
-                                                               cell_viewmodel_snippets
+      controller_viewmodel_snippets = create_viewmodel_snippets controller_properties
+      controller_r_fileref = @view_generator.write_template"#{TEMPLATE_PATH}ControllerViewModelTemplate.swift",
+                                                           "#{controller_name}ViewModel.swift",
+                                                           dir_controllers,
+                                                           group_controllers,
+                                                           { '___CONTROLLERNAME___' => controller_name },
+                                                           controller_viewmodel_snippets
 
-      @target.add_file_references([cell_fileref, cell_r_fileref])
+      @target.add_file_references([controller_fileref, controller_r_fileref])
     end
   end
 end

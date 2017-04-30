@@ -50,14 +50,14 @@ module Genzin
     #
     # @param [String] template_file
     #        The template path relative to the lib folder
+    # @param [String] file_name
+    #        The file name
     # @param [String] target_dir
     #        The folder to generate the file in
     # @param [PBXGroup] group
     #        The Xcode group to put the file in
-    # @param [String] main_placeholder
-    #        The placeholder for main_name (next param)
-    # @param [String] main_name
-    #        The class name (eg. ExampleViewController)
+    # @param [Hash{String => String}] placeholder_map
+    #        The Placeholder => String map (if needed)
     # @param [Array<String>] snippets
     #        The snippets to sub the placeholders
     #
@@ -65,18 +65,24 @@ module Genzin
     #
     # @note The 'placeholders' and 'snippets' must be in the same order!
     #
-    def write_template(template_file, target_dir, group, main_placeholder, main_name, snippets)
+    def write_template(template_file, file_name, target_dir, group, placeholder_map, snippets)
       template = File.read(GenzinHelper.get_script_path(template_file))
-      new_code = template.gsub(main_placeholder, main_name)
+      new_code = template
+      if placeholder_map
+        placeholder_map.each do |placeholder, value|
+          template.gsub!(placeholder, value)
+        end
+      end
       snippets.each do |placeholder, snippet|
         new_code.gsub!(placeholder, snippet || '')
       end
-      new_file = "#{target_dir}/#{main_name}.swift"
+      new_file = "#{target_dir}/#{file_name}"
       out_cell_template = File.new(new_file, 'w')
       out_cell_template.puts(new_code)
       out_cell_template.close
-      puts "Created #{main_name}.swift"
-      group.new_file("Views/Cells/#{main_name}.swift")
+      puts "Created #{file_name}"
+      group_path = target_dir[((target_dir.index '/')+1)..target_dir.size] # Get the path without the root (a/b/c/d becomes b/c/d)
+      group.new_file("#{group_path}/#{file_name}")
     end
   end
 end

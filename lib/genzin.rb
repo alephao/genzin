@@ -3,6 +3,7 @@ require 'fileutils'
 require 'thor'
 require 'xcodeproj'
 require_relative 'genzin/cell_generator'
+require_relative 'genzin/controller_generator'
 
 module Genzin
   TEMPLATE_PATH = '/genzin/templates/'
@@ -70,7 +71,6 @@ module Genzin
 
   class CLI < Thor
     desc 'cell [OPTIONS]','options: --no-viewmodel --no-properties'
-    desc 'controller [OPTIONS]','options: --no-viewmodel --no-properties'
     def cell
       # Get a project in folder and open it
       project_path = GenzinHelper.choose_project
@@ -86,6 +86,8 @@ module Genzin
 
       project.save
     end
+
+    desc 'controller [OPTIONS]','options: --no-viewmodel --no-properties'
     def controller
       # Get a project in folder and open it
       project_path = GenzinHelper.choose_project
@@ -95,6 +97,11 @@ module Genzin
       # Get a project target
       target = GenzinHelper.choose_target project
       return if target.nil?
+
+      controller_generator = ControllerGenerator.new project, target
+      controller_generator.new_controller
+
+      project.save
     end
   end
 end

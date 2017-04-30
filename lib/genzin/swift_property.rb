@@ -41,7 +41,7 @@ module Genzin
     # @return [String] the SnapKit makeConstraints snippet
     #
     def make_constraints
-      "\t\t#{@name}#{@suffix}.snp.makeConstraints { make in" +
+      "\n\t\t#{@name}#{@suffix}.snp.makeConstraints { make in" +
       "\n\t\t\t<#Element Constraints#>" +
       "\n\t\t}"
     end
